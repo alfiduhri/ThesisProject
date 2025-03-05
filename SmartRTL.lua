@@ -15,7 +15,7 @@ function save_location(location,index)
 		-- <PARAM5/X/LATITUDE> <PARAM6/Y/LONGITUDE> <PARAM7/Z/ALTITUDE> <AUTOCONTINUE>
 		local lat = location:lat()*1e-7
 		local long = location:lng()*1e-7
-		local alt = location:alt()*1e-2
+		local alt = location:alt()*1e-3
 		local curr = 0
 		local p1=0 
 		local p2=0 
