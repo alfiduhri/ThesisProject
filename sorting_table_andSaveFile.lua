@@ -8,15 +8,20 @@ local data_table = {
     {5, 6, 3, 16, 0, 0, 0, 0, -35.363262, 149.165237, 584.18, 1}
 }
 
--- Function to change the value of the first column
-local function change_first_column_value(table_data)
+-- Function to sort the data and change the value of the first column
+function sorting_table(table_data)
+    -- Sorting function (Descending order based on first column)
+    table.sort(table_data, function(a, b)
+        return a[1] > b[1]  -- Sort by the first column in descending order
+    end)
+    -- Change the value of the first column
     for i, row in ipairs(table_data) do
         row[1] = i-1  -- Change the value of the first column (index 1) to new_value
     end
 end
 
 -- Function to save the table to a text file
-local function save_table_to_file(filename, table_data)
+function save_table_to_file(filename, table_data)
     local file = io.open(filename, "w") -- Open file for writing
 	-- Creating header
 	file:write("QCG WPL 110\n")  -- Writing txt header
@@ -32,13 +37,9 @@ local function save_table_to_file(filename, table_data)
 	table_data = nil
 end
 
--- Sorting function (Descending order based on first column)
-table.sort(data_table, function(a, b)
-    return a[1] > b[1]  -- Sort by the first column in descending order
-end)
 
 -- Change the value of the first column to 100
-change_first_column_value(data_table)
+sorting_table(data_table)
 
 -- Save the table to "output.txt"
 save_table_to_file("output.txt", data_table)
