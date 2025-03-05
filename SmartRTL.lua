@@ -29,23 +29,137 @@ function save_location(location,index)
 		gcs:send_text(0, string.format("Saved: Index = %d, Lat=%.6f, Lng=%.6f, Alt=%.2f m", index,lat, long, alt))
 		
         -- Insert rows into the table
-		table.insert(location_data,{index, curr, frame, cmd, p1, p2, p3, p4, lat, long, alt,auto})
+		table.insert(waypoints_data,{index, curr, frame, cmd, p1, p2, p3, p4, lat, long, alt,auto})
 	end
 end
 
+-- Function to sort the data and change the value of the first column
+function sorting_table(table_data)
+    -- Sorting function (Descending order based on first column)
+    table.sort(table_data, function(a, b)
+        return a[1] > b[1]  -- Sort by the first column in descending order
+    end)
+    -- Change the value of the first column
+    for i, row in ipairs(table_data) do
+        row[1] = i-1  -- Change the value of the first column (index 1) to new_value
+    end
+end
 
+-- Function to save the table to a text file
+function save_table_to_file(filename, table_data)
+    local file = io.open(filename, "w") -- Open file for writing
+	-- Creating header
+	file:write("QCG WPL 110\n")  -- Writing txt header
 
+    -- Iterate through the table and write its contents
+    for _, row in ipairs(table_data) do
+        file:write(table.concat(row, "\t") .. "\n")  -- Join the row values with tabs and add a newline
+    end
+
+    file:close()  -- Close the file
+	
+	-- Delete the table data (Garbage collection)
+	table_data = nil
+end
+
+-- Function to load the mission
+function read_mission(file_name)
+
+    -- Open file
+    file = assert(io.open(file_name), 'Could not open :' .. file_name)
+  
+    -- check header
+    assert(string.find(file:read('l'),'QGC WPL 110') == 1, file_name .. ': incorrect format')
+  
+    -- clear any existing mission
+    assert(mission:clear(), 'Could not clear current mission')
+    
+  
+    -- read each line and write to mission
+    local item = mavlink_mission_item_int_t()
+    local index = 0
+    local fail = false
+    while true and not fail do
+       local line = file:read()
+       if not line then
+          break
+       end
+       local ret, _, seq, _--[[ curr ]], frame, cmd, p1, p2, p3, p4, x, y, z, _--[[ autocont ]] = string.find(line, "^(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+([-.%d]+)%s+([-.%d]+)%s+([-.%d]+)%s+([-.%d]+)%s+([-.%d]+)%s+([-.%d]+)%s+([-.%d]+)%s+(%d+)")
+       if not ret then
+          fail = true
+          break
+       end
+       if tonumber(seq) ~= index then
+          fail = true
+          break
+       end
+       item:seq(tonumber(seq))
+       item:frame(tonumber(frame))
+       item:command(tonumber(cmd))
+       item:param1(tonumber(p1))
+       item:param2(tonumber(p2))
+       item:param3(tonumber(p3))
+       item:param4(tonumber(p4))
+       if mission:cmd_has_location(tonumber(cmd)) then
+          item:x(math.floor(tonumber(x)*10^7))
+          item:y(math.floor(tonumber(y)*10^7))
+       else
+          item:x(math.floor(tonumber(x)))
+          item:y(math.floor(tonumber(y)))
+       end
+       item:z(tonumber(z))
+       if not mission:set_item(index,item) then
+          mission:clear() -- clear part loaded mission
+          fail = true
+          break
+       end
+       index = index + 1
+    end
+    if fail then
+       mission:clear()  --clear anything already loaded
+       error(string.format('failed to load mission at seq num %u', index))
+    end
+    gcs:send_text(0, string.format("Loaded %u mission items", index))
+end
+
+--Funcation to change the mode into auto mode
+function auto_cmd()
+	local param_scr = param:get('SCR_ENABLE')
+
+	if param_scr==1 then
+		gcs:send_text(0,'set_mode is active')  
+		vehicle:set_mode(10) --auto mode: 10 (from MAVLink)
+		--else
+		--vehicle:set_mode(0)
+	end
+		
+	--return auto_cmd, 1000
+end
 -- Update function or main function
 function update ()
+	--Getting the location
 	location = ahrs:get_location()
 	
+	--Save the location into the table called "waypoints_data"
 	if location then
         gcs:send_text(0, string.format("Location - Index:%d Lat:%.1f Long:%.1f Alt:%.1f",index, location:lat(), location:lng(), location:alt()))
 		save_location(location,index)
 		index = index+1
     end
 	
-    return update, 5000
+	--Change the value of the first column to 0,1,2,...
+	sorting_table(data_table)
+
+	--Save the table to "output.txt"
+	save_table_to_file("location_log.txt", data_table)
+    
+	--Load the mission from .txt
+	read_mission('location_log.txt')
+
+	--Change into auto mode
+    auto_cmd()
+
+	return update, 5000
 
 end
 
