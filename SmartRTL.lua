@@ -36,6 +36,9 @@ function save_location(location,index)
 		-- Print the stored data for confirmation
 		gcs:send_text(0, string.format("Saved: Index = %d, Lat=%.6f, Lng=%.6f, Alt=%.2f m", index,lat, long, alt))
 		
+        -- Insert rows into the table
+		table.insert(location_data,{index, curr, frame, cmd, p1, p2, p3, p4, lat, long, alt,auto})
+        
 		-- Save the data into log file
 		file:write(string.format("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%.6f\t%.6f\t%.2f\t%d\n",index, curr, frame, cmd, p1, p2, p3, p4, lat, long, alt,auto)) -- \t is <tab> 
 		file:close()
