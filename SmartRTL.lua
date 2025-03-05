@@ -49,7 +49,7 @@ end
 function save_table_to_file(filename, table_data)
     local file = io.open(filename, "w") -- Open file for writing
 	-- Creating header
-	file:write("QCG WPL 110\n")  -- Writing txt header
+	file:write("QGC WPL 110\n")  -- Writing txt header
 
     -- Iterate through the table and write its contents
     for _, row in ipairs(table_data) do
