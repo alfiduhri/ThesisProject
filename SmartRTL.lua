@@ -6,12 +6,6 @@ home = ahrs:get_home()  -- Get the home data
 origin = ahrs:get_origin()  -- Get the origin data
 local index = 0
 
- -- Creating Header
-file = io.open("location_log.txt", "w")
-file:write("QCG WPL 110\n")  -- Writing txt header
-file:close()
-gcs:send_text(0, string.format("Header has been created, index = %d",index))
-
 function save_location(location,index)
 	--local rtl_checking = script_rtl:get()
 	local file = io.open("location_log.txt", "a")  -- Open file in append mode
