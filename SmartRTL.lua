@@ -6,6 +6,7 @@ home = ahrs:get_home()  -- Get the home data
 origin = ahrs:get_origin()  -- Get the origin data
 local index = 0
 
+-- Funcation to save the location into the table with specified format
 function save_location(location,index)
 	if location then
 		
@@ -32,6 +33,9 @@ function save_location(location,index)
 	end
 end
 
+
+
+-- Update function or main function
 function update ()
 	location = ahrs:get_location()
 	
