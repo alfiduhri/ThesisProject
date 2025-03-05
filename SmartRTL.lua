@@ -154,6 +154,8 @@ function update ()
 			save_location(location,index)
 			index = index+1
     	end
+
+        return update, 10000
 	elseif param_user1 == 1 --[[or <signal_lost>]]then 
 		--Change the value of the first column to 0,1,2,...
 		sorting_table(waypoints_data)
@@ -170,8 +172,6 @@ function update ()
 		--Change into auto mode
     	auto_cmd()
 	end
-
-	return update, 10000
 
 end
 
