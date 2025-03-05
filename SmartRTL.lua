@@ -134,7 +134,7 @@ end
 
 --Funcation to change the mode into loiter mode
 function loiter_cmd()
-    local mode = "LOITER"
+    local mode = 12   -- Loiter mode is 12
 	gcs:send_text(0,'loiter mode is activated')  
 	vehicle:set_mode(mode)
 end
