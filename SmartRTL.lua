@@ -151,10 +151,10 @@ function update ()
     	end
 	elseif param_user1 == 1 --[[or <signal_lost>]]then 
 		--Change the value of the first column to 0,1,2,...
-		sorting_table(data_table)
+		sorting_table(waypoints_data)
 
 		--Save the table to "output.txt"
-		save_table_to_file("location_log.txt", data_table)
+		save_table_to_file("location_log.txt", waypoints_data)
     
 		--Load the mission from .txt
 		read_mission('location_log.txt')
