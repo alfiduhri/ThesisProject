@@ -139,7 +139,7 @@ end
 function update ()
 	local param_user1 = param:get('SCR_USER1')
 
-	if param_user1 = 0 then
+	if param_user1 == 0 then
 		--Getting the location
 		location = ahrs:get_location()
 	
@@ -149,7 +149,7 @@ function update ()
 			save_location(location,index)
 			index = index+1
     	end
-	elseif param_user1 = 1 --[[or <signal_lost>]]then 
+	elseif param_user1 == 1 --[[or <signal_lost>]]then 
 		--Change the value of the first column to 0,1,2,...
 		sorting_table(data_table)
 
