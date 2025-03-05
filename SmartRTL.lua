@@ -137,7 +137,6 @@ function loiter_cmd()
     local mode = "LOITER"
 	gcs:send_text(0,'loiter mode is activated')  
 	vehicle:set_mode(mode)
-	end
 end
 
 
@@ -164,7 +163,7 @@ function update ()
 
         -- Change into loiter command
         loiter_cmd()
-        
+
 		--Load the mission from .txt
 		read_mission('location_log.txt')
 
