@@ -7,9 +7,6 @@ origin = ahrs:get_origin()  -- Get the origin data
 local index = 0
 
 function save_location(location,index)
-	--local rtl_checking = script_rtl:get()
-	local file = io.open("location_log.txt", "a")  -- Open file in append mode
-	
 	if location then
 		
 		-- Waypoints format: (12 items)
@@ -32,13 +29,8 @@ function save_location(location,index)
 		
         -- Insert rows into the table
 		table.insert(location_data,{index, curr, frame, cmd, p1, p2, p3, p4, lat, long, alt,auto})
-        
-		-- Save the data into log file
-		file:write(string.format("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%.6f\t%.6f\t%.2f\t%d\n",index, curr, frame, cmd, p1, p2, p3, p4, lat, long, alt,auto)) -- \t is <tab> 
-		file:close()
 	end
 end
---]]
 
 function update ()
 	location = ahrs:get_location()
