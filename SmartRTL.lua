@@ -137,29 +137,33 @@ function auto_cmd()
 end
 -- Update function or main function
 function update ()
-	--Getting the location
-	location = ahrs:get_location()
-	
-	--Save the location into the table called "waypoints_data"
-	if location then
-        gcs:send_text(0, string.format("Location - Index:%d Lat:%.1f Long:%.1f Alt:%.1f",index, location:lat(), location:lng(), location:alt()))
-		save_location(location,index)
-		index = index+1
-    end
-	
-	--Change the value of the first column to 0,1,2,...
-	sorting_table(data_table)
+	local param_user1 = param:get('SCR_USER1')
 
-	--Save the table to "output.txt"
-	save_table_to_file("location_log.txt", data_table)
+	if param_user1 = 0 then
+		--Getting the location
+		location = ahrs:get_location()
+	
+		--Save the location into the table called "waypoints_data"
+		if location then
+        	gcs:send_text(0, string.format("Location - Index:%d Lat:%.1f Long:%.1f Alt:%.1f",index, location:lat(), location:lng(), location:alt()))
+			save_location(location,index)
+			index = index+1
+    	end
+	elseif param_user1 = 1 then 
+		--Change the value of the first column to 0,1,2,...
+		sorting_table(data_table)
+
+		--Save the table to "output.txt"
+		save_table_to_file("location_log.txt", data_table)
     
-	--Load the mission from .txt
-	read_mission('location_log.txt')
+		--Load the mission from .txt
+		read_mission('location_log.txt')
 
-	--Change into auto mode
-    auto_cmd()
+		--Change into auto mode
+    	auto_cmd()
+	end
 
-	return update, 5000
+	return update, 10000
 
 end
 
