@@ -127,10 +127,20 @@ function auto_cmd()
 	local param_scr = param:get('SCR_ENABLE')
 
 	if param_scr==1 then
-		gcs:send_text(0,'set_mode is active')  
+		gcs:send_text(0,'auto mode is activated')  
 		vehicle:set_mode(10) --auto mode: 10 (from MAVLink)
 	end
 end
+
+--Funcation to change the mode into loiter mode
+function loiter_cmd()
+    local mode = "LOITER"
+	gcs:send_text(0,'loiter mode is activated')  
+	vehicle:set_mode(mode)
+	end
+end
+
+
 -- Update function or main function
 function update ()
 	local param_user1 = param:get('SCR_USER1')
@@ -151,7 +161,10 @@ function update ()
 
 		--Save the table to "output.txt"
 		save_table_to_file("location_log.txt", waypoints_data)
-    
+
+        -- Change into loiter command
+        loiter_cmd()
+        
 		--Load the mission from .txt
 		read_mission('location_log.txt')
 
