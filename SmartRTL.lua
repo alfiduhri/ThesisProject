@@ -129,11 +129,7 @@ function auto_cmd()
 	if param_scr==1 then
 		gcs:send_text(0,'set_mode is active')  
 		vehicle:set_mode(10) --auto mode: 10 (from MAVLink)
-		--else
-		--vehicle:set_mode(0)
 	end
-		
-	--return auto_cmd, 1000
 end
 -- Update function or main function
 function update ()
