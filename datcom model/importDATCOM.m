@@ -1,0 +1,15 @@
+usenanvar=true;
+aero_asym=datcomimport('EOSX4Monolith_asym.dat',usenanvar);
+aero_sym5m=datcomimport('EOSX4Monolith_sym_5M.dat',usenanvar);
+aero_sym10m=datcomimport('EOSX4Monolith_sym_10M.dat',usenanvar);
+aero_sym15m=datcomimport('EOSX4Monolith_sym_15M.dat',usenanvar);
+aero_sym20m=datcomimport('EOSX4Monolith_sym_20M.dat',usenanvar);
+aero_sym25m=datcomimport('EOSX4Monolith_sym_25M.dat',usenanvar);
+aero_sym0m=datcomimport('EOSX4Monolith_sym_SL.dat',usenanvar);
+aero_sym = cell(1,6);
+aero_sym{1,1}=aero_sym0m{1,1};
+aero_sym{1,2}=aero_sym5m{1,1};
+aero_sym{1,3}=aero_sym10m{1,1};
+aero_sym{1,4}=aero_sym15m{1,1};
+aero_sym{1,5}=aero_sym20m{1,1};
+aero_sym{1,6}=aero_sym25m{1,1};
