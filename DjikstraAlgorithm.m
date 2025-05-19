@@ -1,0 +1,63 @@
+% Original path (with a visible loop)
+path = [0 0;
+        1 1;
+        2 2;
+        3 1;
+        2 0;
+        1 -1;
+        0 0;    % back to start — loop
+        1 1;
+        2 2;
+        3 3];
+
+maxSkipDist = 5; % Max allowed shortcut distance
+simplified = removeLoopsDijkstra(path, maxSkipDist);
+
+% Plot original vs simplified
+figure; hold on; grid on; axis equal;
+plot(path(:,1), path(:,2), 'b--o', 'DisplayName', 'Original Path');
+plot(simplified(:,1), simplified(:,2), 'r-o', 'LineWidth', 2, 'DisplayName', 'Simplified Path');
+legend;
+title('Loop Removal via Optimization (Dijkstra)');
+
+
+
+
+function simplifiedPath = removeLoopsDijkstra(path, maxSkipDist)
+    n = size(path, 1);
+    dist = inf(1, n);
+    prev = NaN(1, n);
+    dist(1) = 0;
+
+    % Priority queue as a list (Dijkstra)
+    Q = [1];
+
+    while ~isempty(Q)
+        % Pop node with minimum dist
+        [~, idx] = min(dist(Q));
+        u = Q(idx);
+        Q(idx) = [];
+
+        for v = (u+1):n
+            d = norm(path(u,:) - path(v,:));
+            if d <= maxSkipDist
+                alt = dist(u) + d;
+                if alt < dist(v)
+                    dist(v) = alt;
+                    prev(v) = u;
+                    if ~ismember(v, Q)
+                        Q = [Q, v];
+                    end
+                end
+            end
+        end
+    end
+
+    % Reconstruct shortest path
+    simplifiedPath = [];
+    u = n;
+    while ~isnan(u)
+        simplifiedPath = [path(u, :); simplifiedPath];
+        u = prev(u);
+    end
+end

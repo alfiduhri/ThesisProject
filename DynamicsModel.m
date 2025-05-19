@@ -9,7 +9,7 @@ bg = 0.08;
 bva = 1;
 bphi = 1;
 wn=0;we=0;wd=0;
-u = [deg2rad(20);10;deg2rad(0)];
+u = [deg2rad(0);0;deg2rad(0)];
 chi_0 = deg2rad(30);
 gamma_0 = 0;
 Va_0 = 5;
