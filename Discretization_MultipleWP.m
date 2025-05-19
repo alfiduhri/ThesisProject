@@ -2,13 +2,13 @@ clear; clc; close all
 import casadi.*
 
 % Problem setup
-N = 300;                   % Number of control intervals
+N = 150;                   % Number of control intervals
 g = 9.81;                % Gravity acceleration
 b_gamma=0.5;
 b_va=0.5;
 b_phi=0.5;
 b=[b_gamma;b_va;b_phi];  % b=[b_gamma;b_va;b_phi]
-waypoints = [0, 0, 20; 15, 15, 20; 30,12,20;30,30,20];  % 3 waypoints [x, y]
+waypoints = [0, 0, 20; 10, 10, 20; 15,12,20;20,12,20];  % 3 waypoints [x, y]
 nw = size(waypoints, 1);
 wp_idx = round(linspace(1, N, nw));  % Time indices to associate waypoints
 
@@ -38,7 +38,7 @@ J = 0;
 g = [];
 
 % Parameters
-lambda_wp = 50;
+lambda_wp = 20;
 lambda_time = 10;              % Penalize total time
 
 for k = 1:N
@@ -64,7 +64,7 @@ J = J + lambda_time * T;
 % Initial and final state constraints
 x0=[0;0;20;0;0;5;0];
 xf = waypoints(end,:)';
-g = [X(:,1) - x0;g];
+g = [X(:,1) - x0-T/N*f(x0,U(:,1));g];
 g = [g; X(1:3,end) - xf];
 
 % Pack decision variables
@@ -85,7 +85,7 @@ lbg = zeros(size(g));
 ubg = zeros(size(g));
 
 % Bounds on variables
-T_min = 5; T_max = 30;
+T_min = 5; T_max = 20;
 lbw = [-inf*ones(nx*(N+1)+nu*N,1); T_min];
 ubw = [ inf*ones(nx*(N+1)+nu*N,1); T_max];
 
