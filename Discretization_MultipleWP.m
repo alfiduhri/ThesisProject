@@ -2,13 +2,13 @@ clear; clc; close all
 import casadi.*
 
 % Problem setup
-N = 150;                   % Number of control intervals
+N = 65;                   % Number of control intervals
 g = 9.81;                % Gravity acceleration
-b_gamma=0.5;
-b_va=0.5;
-b_phi=0.5;
+b_gamma=1.5;
+b_va=0.6;
+b_phi=7;
 b=[b_gamma;b_va;b_phi];  % b=[b_gamma;b_va;b_phi]
-waypoints = [0, 0, 20; 10, 10, 20; 15,12,20;20,12,20];  % 3 waypoints [x, y]
+waypoints = [0, 0, 20; 10, 10, 15; 15,12,20;20,12,20];  % 3 waypoints [x, y]
 nw = size(waypoints, 1);
 wp_idx = round(linspace(1, N, nw));  % Time indices to associate waypoints
 
@@ -40,7 +40,8 @@ g = [];
 % Parameters
 lambda_wp = 20;
 lambda_time = 10;              % Penalize total time
-
+lbw = [];
+ubw = [];
 for k = 1:N
     % Dynamics constraint
     x_next = X(:,k) + (T/N) * f(X(:,k), U(:,k));
@@ -48,6 +49,8 @@ for k = 1:N
 
     % Control effort cost
     J = J + U(:,k)' * U(:,k) * (T/N);
+    lbw=[lbw;-deg2rad(45);-inf;-deg2rad(180)];
+    ubw=[ubw;deg2rad(45);inf;deg2rad(180)];
 end
 
 % Soft waypoint penalties
@@ -86,8 +89,8 @@ ubg = zeros(size(g));
 
 % Bounds on variables
 T_min = 5; T_max = 20;
-lbw = [-inf*ones(nx*(N+1)+nu*N,1); T_min];
-ubw = [ inf*ones(nx*(N+1)+nu*N,1); T_max];
+lbw = [-inf*ones(nx*(N+1),1);lbw; T_min];
+ubw = [inf*ones(nx*(N+1),1);ubw; T_max];
 
 % Solve
 sol = solver('x0', w0, 'lbg', lbg, 'ubg', ubg, 'lbx', lbw, 'ubx', ubw);
