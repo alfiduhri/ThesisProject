@@ -2,13 +2,13 @@ clear; clc; close all
 import casadi.*
 
 % Problem setup
-N = 65;                   % Number of control intervals
+N = 32;                   % Number of control intervals
 g = 9.81;                % Gravity acceleration
 b_gamma=1.5;
 b_va=0.6;
 b_phi=7;
 b=[b_gamma;b_va;b_phi];  % b=[b_gamma;b_va;b_phi]
-waypoints = [0, 0, 20; 10, 10, 15; 15,12,20;20,12,20];  % 3 waypoints [x, y]
+waypoints = [0, 0, 20; 10, 10, 16; 15,12,20;20,12,20];  % 3 waypoints [x, y]
 nw = size(waypoints, 1);
 wp_idx = round(linspace(1, N, nw));  % Time indices to associate waypoints
 
@@ -49,8 +49,8 @@ for k = 1:N
 
     % Control effort cost
     J = J + U(:,k)' * U(:,k) * (T/N);
-    lbw=[lbw;-deg2rad(45);-inf;-deg2rad(180)];
-    ubw=[ubw;deg2rad(45);inf;deg2rad(180)];
+    lbw=[lbw;-deg2rad(20);-inf;-deg2rad(60)];
+    ubw=[ubw;deg2rad(45);inf;deg2rad(60)];
 end
 
 % Soft waypoint penalties
@@ -65,9 +65,9 @@ end
 J = J + lambda_time * T;
 
 % Initial and final state constraints
-x0=[0;0;20;0;0;5;0];
+x0=[waypoints(1,:)';0;0;5;0];
 xf = waypoints(end,:)';
-g = [X(:,1) - x0-T/N*f(x0,U(:,1));g];
+g = [X(:,1) - x0;g];
 g = [g; X(1:3,end) - xf];
 
 % Pack decision variables
