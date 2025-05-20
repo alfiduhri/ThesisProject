@@ -1,3 +1,4 @@
+-- Code Version 1
 -- example script for using "get_origin()"
 -- prints the home and ekf origin lat long and altitude to the console every 5 seconds
 
