@@ -1,16 +1,31 @@
 % Original path (with a visible loop)
-path = [0 0;
-        1 1;
-        2 2;
-        3 1;
-        2 0;
-        1 -1;
-        0 0;    % back to start — loop
-        1 1;
-        2 2;
-        3 3];
+% path = [0 0;
+%         1 1;
+%         2 2;
+%         3 1;
+%         2 0;
+%         1 -1;
+%         0 0;    % back to start — loop
+%         1 1;
+%         2 2;
+%         3 3];
+path = [
+    0,  0,  20;
+    5,  0,  20;
+    10, -5, 20;
+    15, 0,  20;
+    10, 5,  20;
+    5,  0,  20;
+    10, -5, 20;
+    15, 0,  20;
+    10, 5,  20;
+    5,  10, 20;
+    10, 15, 20;
+    15, 20, 20;
+    20, 20, 20;
+];
 
-maxSkipDist = 5; % Max allowed shortcut distance
+maxSkipDist = 8; % Max allowed shortcut distance
 simplified = removeLoopsDijkstra(path, maxSkipDist);
 
 % Plot original vs simplified

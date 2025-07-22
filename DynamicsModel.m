@@ -19,6 +19,7 @@ x0 = [0;0;20;chi_0;gamma_0;Va_0;phi_0];
 tspan = [0 100];
 
 [t,x]=ode45(@(t,x) dynGuidance(t,x,bg,bva,bphi,wn,we,wd,g,u), tspan, x0);
+plot(t,x(:,3))
 
 function xdot = dynGuidance(t,x,bg,bva,bphi,wn,we,wd,g,u)
     % Controller definition

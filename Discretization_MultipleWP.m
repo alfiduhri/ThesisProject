@@ -2,13 +2,29 @@ clear; clc; close all
 import casadi.*
 
 % Problem setup
-N = 32;                   % Number of control intervals
+N = 50;                   % Number of control intervals
 g = 9.81;                % Gravity acceleration
 b_gamma=1.5;
 b_va=0.6;
 b_phi=7;
 b=[b_gamma;b_va;b_phi];  % b=[b_gamma;b_va;b_phi]
-waypoints = [0, 0, 20; 10, 10, 16; 15,12,20;20,12,20];  % 3 waypoints [x, y]
+waypoints = [
+0	0	20;
+5	0	20;
+10	5	20;
+10	15	20;
+15	20	20;
+20	20	20;
+];  % 3 waypoints [x, y, z]
+% waypoints = [
+% 0	0	20;
+% 5	0	20;
+% 10	5	20;
+% 5	10	20;
+% 10	15	20;
+% 15	20	20;
+% 20	20	20;
+% ]; 
 nw = size(waypoints, 1);
 wp_idx = round(linspace(1, N, nw));  % Time indices to associate waypoints
 
@@ -49,8 +65,8 @@ for k = 1:N
 
     % Control effort cost
     J = J + U(:,k)' * U(:,k) * (T/N);
-    lbw=[lbw;-deg2rad(20);-inf;-deg2rad(60)];
-    ubw=[ubw;deg2rad(45);inf;deg2rad(60)];
+    lbw=[lbw;-deg2rad(30);5;-deg2rad(60)];
+    ubw=[ubw;deg2rad(20);15;deg2rad(60)];
 end
 
 % Soft waypoint penalties
@@ -58,7 +74,7 @@ for i = 1:nw
     wp_k = wp_idx(i);
     wp = waypoints(i,:)';
     pos = X(1:3, wp_k);
-    J = J + lambda_wp * sumsqr(pos - wp);
+    J = J + lambda_wp * sumsqr(pos - wp)^2;
 end
 
 % Penalize total time (optional: or minimize just T)
@@ -88,7 +104,7 @@ lbg = zeros(size(g));
 ubg = zeros(size(g));
 
 % Bounds on variables
-T_min = 5; T_max = 20;
+T_min = 5; T_max = 30;
 lbw = [-inf*ones(nx*(N+1),1);lbw; T_min];
 ubw = [inf*ones(nx*(N+1),1);ubw; T_max];
 
@@ -99,12 +115,21 @@ T_opt = w_opt(end);
 
 % Extract solution
 X_opt = reshape(w_opt(1:(nx*(N+1))), nx, N+1);
+X_opt = round(X_opt,2);
 U_opt = reshape(w_opt((nx*(N+1)+1):(end-1)), nu, N);
 
 % Plot trajectory
 figure;
 plot3(X_opt(1,:), X_opt(2,:), X_opt(3,:), 'b-o'); hold on;
-plot3(waypoints(:,1), waypoints(:,2), waypoints(:,3), 'rx', 'MarkerSize', 10, 'LineWidth', 2);
+loc = 2:length(waypoints)-1;
+plot3(waypoints(loc,1), waypoints(loc,2), waypoints(loc,3), 'rx',...
+    'MarkerSize', 10, 'LineWidth', 2);
+scatter3(waypoints(1,1),waypoints(1,2),waypoints(1,3),'d','filled',...
+    'MarkerFaceColor',"#EDB120",'MarkerEdgeColor',"#EDB120",...
+    "LineWidth",2);
+scatter3(waypoints(end,1),waypoints(end,2),waypoints(end,3),'s','filled',...
+    'MarkerFaceColor',"#A2142F",'MarkerEdgeColor',"#A2142F",...
+    "LineWidth",2);
 xlabel('x'); ylabel('y'); zlabel('h');
 title(sprintf('UAV Trajectory (Optimized T = %.2f s)', T_opt));
-legend('Trajectory', 'Waypoints'); grid on;
+legend('Trajectory', 'Waypoints','Start','Finish'); grid on;
