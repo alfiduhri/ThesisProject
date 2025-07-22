@@ -33,7 +33,9 @@ lambda_0 = ones(7,1);
 x0 = [0;0;20;chi_0;gamma_0;Va_0;phi_0];
 
 % 2. Integrate the system (x_dot and lambda_dot)
-[t,x]=ode45(@(t,x) tpbvpSys(t,x,bg,bva,bphi,g,wp_ts), tspan, [x0;lambda_0]);
+[~,lam]=ode45(@(t,lam) adjointSys(t,lam,bg,bva,bphi,g,wp_ts),tspan,lambda_0);
+u = Controller(x,bg,bva,bphi);
+[t,x]=ode45(@(t,x) tpbvpSys(t,x,bg,bva,bphi,g,u), tspan, x0);
 
 % 3. Compute mu(tf) = mu(x(tf),lambda(tf))
 
@@ -85,8 +87,7 @@ end
 
 function u = Controller(x,bg,bva,bphi)
     % Take the corresponding lambda from x
-    % Lam1 = x8, lam2 = x9, etc.
-    lam4 = x(11); lam6 = x(13); lam7 = x(14);
+    lam4 = x(4); lam6 = x(6); lam7 = x(7);
     % Optimal control input
     % u1 = gamma_c
     if -bg*lam6/2 > deg2rad(20)
