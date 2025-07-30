@@ -5,16 +5,15 @@
 % of low-level autopilot loops
 
 g=9.81; %m/s^2
-bg = 0.08;
-bva = 1;
-bphi = 1;
+bg = 1.5;
+bva = 0.6;
+bphi = 7;
 wn=0;we=0;wd=0;
-u = [deg2rad(0);0;deg2rad(0)];
 chi_0 = deg2rad(30);
 gamma_0 = 0;
 Va_0 = 5;
 phi_0 = 0;
-tspan = [0 20];
+tspan = [0 15];
 
 % List of waypoints
 waypoints = [
@@ -29,18 +28,59 @@ waypoints = [
 wp_ts = enumWP(waypoints,tspan);
 
 % 1. Make an initial guess of lambda_0
-lambda_0 = ones(7,1);
+lambda0 = 0.2*eye(7,1);
 x0 = [0;0;20;chi_0;gamma_0;Va_0;phi_0];
 
 % 2. Integrate the system (x_dot and lambda_dot)
-[~,lam]=ode45(@(t,lam) adjointSys(t,lam,bg,bva,bphi,g,wp_ts),tspan,lambda_0);
-u = Controller(x,bg,bva,bphi);
-[t,x]=ode45(@(t,x) tpbvpSys(t,x,bg,bva,bphi,g,u), tspan, x0);
+% [t,x]=ode45(@(t,x) tpbvpSys(t,x,bg,bva,bphi,g,wp_ts), tspan, [x0;lambda_0]);
+% plot(t,x(:,1))
+% hold on
+% plot(t,x(:,2))
+% plot(t,x(:,3))
 
 % 3. Compute mu(tf) = mu(x(tf),lambda(tf))
+% Want to make mu_tf = 0 or close to 0
+mu_tf = shooting_residual(x0,lambda0,waypoints,tspan,bg,bva,bphi,g,wp_ts);
 
 % 4. Update lambda_0 = lambda_0 + d(lambda_0)
 % 5. Repeat steps 2-4 until |mu(tf)| becomes sufficiently small
+% Initial Jacobian approximation using finite difference
+h = 1e-6;
+J = finite_jacobian(lambda0,h,x0,waypoints,tspan,bg,bva,bphi,g,wp_ts);
+
+tol = 1e-6;
+max_iter = 30;
+
+for k = 1:max_iter
+    % Solve B * delta = -r
+    delta_lambda = -pinv(J) \ mu_tf;
+    lambda_new = lambda0 + delta_lambda;
+        
+    mu_new = shooting_residual(x0,lambda_new,waypoints,tspan,bg,bva,bphi,g,wp_ts);
+
+    % Broyden update
+    y = mu_new - mu_tf;
+    s = delta_lambda;
+    J = J + ((y - J * s) * s') / (s' * s);
+
+    fprintf('Iter %d: Residual norm = %.4e\n', k, norm(mu_new));
+
+    if norm(s) < tol
+        lambda0 = lambda_new;
+        break;
+    end
+
+    % Update
+    lambda0 = lambda_new;
+    mu_tf = mu_new;
+end
+
+% Final integration with updated lambda0
+[t,x]=ode45(@(t,x) tpbvpSys(t,x,bg,bva,bphi,g,wp_ts), tspan, [x0;lambda0]);
+plot3(x(:,1),x(:,2),x(:,3))
+xlabel('x')
+ylabel('y')
+zlabel('h')
 
 function xdot_aug = tpbvpSys(t,x,bg,bva,bphi,g,wp_ts)
     % Controller definition
@@ -55,8 +95,8 @@ function xdot_aug = tpbvpSys(t,x,bg,bva,bphi,g,wp_ts)
     h_wp = interp1(wp_ts(:,1),wp_ts(:,4),t);
 
     % Adjoint function
-    lam1 = x(1); lam2 = x(2); lam3 = x(3); lam4 = x(4); lam5 = x(5);
-    lam6 = x(6); lam7 = x(7);
+    lam1 = x(8); lam2 = x(9); lam3 = x(10); lam4 = x(11); lam5 = x(12);
+    lam6 = x(13); lam7 = x(14);
     lam1_dot=2*(pn_wp-x(1));
     lam2_dot=2*(pe_wp-x(2));
     lam3_dot=2*(h_wp-x(3));
@@ -87,24 +127,31 @@ end
 
 function u = Controller(x,bg,bva,bphi)
     % Take the corresponding lambda from x
-    lam4 = x(4); lam6 = x(6); lam7 = x(7);
+    % Lam1 = x8, lam2 = x9, etc.
+    lam4 = x(11); lam6 = x(13); lam7 = x(14);
     % Optimal control input
     % u1 = gamma_c
-    if -bg*lam6/2 > deg2rad(20)
+    if -bg*lam6/2 >= deg2rad(20)
         gamma_c = deg2rad(20);
-    elseif -bg*lam6/2 < -deg2rad(30)
+    elseif -bg*lam6/2 <= -deg2rad(30)
         gamma_c = -deg2rad(30);
     else
         gamma_c = -lam6*bg/2;
     end
 
     % u2 = Va_c
-    Va_c = -lam4*bva/2;
+    if -bva*lam4/2 >= 15
+        Va_c = 15;
+    elseif -bva*lam4/2 <= 5
+        Va_c = 5;
+    else
+        Va_c = -lam4*bva/2;
+    end
 
     % u3 = phi_c
-    if -bphi*lam7/2 > deg2rad(60)
+    if -bphi*lam7/2 >= deg2rad(60)
         phi_c = deg2rad(60);
-    elseif -bphi*lam7/2 < -deg2rad(60)
+    elseif -bphi*lam7/2 <= -deg2rad(60)
         phi_c = -deg2rad(60);
     else
         phi_c = -lam7*bphi/2;
@@ -135,4 +182,22 @@ function wp_ts = enumWP(wp,tspan)
     t_wp = linspace(tspan(1),tspan(end),n);
 
     wp_ts = [t_wp' pn_w' pe_w' h_w'];
+end
+
+function r = shooting_residual(x0,lambda0,wp,tspan,bg,bva,bphi,g,wp_ts)
+    y0 = [x0; lambda0];
+    [~, Y] = ode45(@(t, y) tpbvpSys(t,y,bg,bva,bphi,g,wp_ts), tspan, y0);
+    x_final = [Y(end, 1:3) Y(end,11:14)]';
+    r = x_final - [wp(end,1); wp(end,2); wp(end,3);zeros(4,1)];
+end
+
+function J = finite_jacobian(lambda0,h,x0,wp,tspan,bg,bva,bphi,g,wp_ts)
+    n = length(lambda0);
+    J = zeros(7, n);
+    for i = 1:n
+        d = zeros(n,1); d(i) = h;
+        r1 = shooting_residual(x0,lambda0 + d,wp,tspan,bg,bva,bphi,g,wp_ts);
+        r0 = shooting_residual(x0,lambda0,wp,tspan,bg,bva,bphi,g,wp_ts);
+        J(:,i) = (r1 - r0) / h;
+    end
 end

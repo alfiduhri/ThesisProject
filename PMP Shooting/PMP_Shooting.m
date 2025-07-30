@@ -5,16 +5,15 @@
 % of low-level autopilot loops
 
 g=9.81; %m/s^2
-bg = 0.08;
-bva = 1;
-bphi = 1;
+bg = 1.5;
+bva = 0.6;
+bphi = 7;
 wn=0;we=0;wd=0;
-u = [deg2rad(0);0;deg2rad(0)];
 chi_0 = deg2rad(30);
 gamma_0 = 0;
 Va_0 = 5;
 phi_0 = 0;
-tspan = [0 20];
+tspan = [0 15];
 
 % List of waypoints
 waypoints = [
@@ -29,15 +28,22 @@ waypoints = [
 wp_ts = enumWP(waypoints,tspan);
 
 % 1. Make an initial guess of lambda_0
-lambda_0 = ones(7,1);
+lambda_0 = [0.5;2;-1;1;-1;-1;1];
 x0 = [0;0;20;chi_0;gamma_0;Va_0;phi_0];
 
 % 2. Integrate the system (x_dot and lambda_dot)
 [t,x]=ode45(@(t,x) tpbvpSys(t,x,bg,bva,bphi,g,wp_ts), tspan, [x0;lambda_0]);
+plot(t,x(:,1))
+hold on
+plot(t,x(:,2))
+plot(t,x(:,3))
 
 % 3. Compute mu(tf) = mu(x(tf),lambda(tf))
+% Want to make mu_tf = 0 or close to 0
+mu_tf = [x(end,1:3)'-waypoints(end,:);x(end,11:14)];
 
 % 4. Update lambda_0 = lambda_0 + d(lambda_0)
+
 % 5. Repeat steps 2-4 until |mu(tf)| becomes sufficiently small
 
 function xdot_aug = tpbvpSys(t,x,bg,bva,bphi,g,wp_ts)
@@ -89,21 +95,27 @@ function u = Controller(x,bg,bva,bphi)
     lam4 = x(11); lam6 = x(13); lam7 = x(14);
     % Optimal control input
     % u1 = gamma_c
-    if -bg*lam6/2 > deg2rad(20)
+    if -bg*lam6/2 >= deg2rad(20)
         gamma_c = deg2rad(20);
-    elseif -bg*lam6/2 < -deg2rad(30)
+    elseif -bg*lam6/2 <= -deg2rad(30)
         gamma_c = -deg2rad(30);
     else
         gamma_c = -lam6*bg/2;
     end
 
     % u2 = Va_c
-    Va_c = -lam4*bva/2;
+    if -bva*lam4/2 >= 15
+        Va_c = 15;
+    elseif -bva*lam4/2 <= 5
+        Va_c = 5;
+    else
+        Va_c = -lam4*bva/2;
+    end
 
     % u3 = phi_c
-    if -bphi*lam7/2 > deg2rad(60)
+    if -bphi*lam7/2 >= deg2rad(60)
         phi_c = deg2rad(60);
-    elseif -bphi*lam7/2 < -deg2rad(60)
+    elseif -bphi*lam7/2 <= -deg2rad(60)
         phi_c = -deg2rad(60);
     else
         phi_c = -lam7*bphi/2;
