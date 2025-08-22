@@ -9,15 +9,14 @@ bg = 1.5;
 bva = 0.6;
 bphi = 7;
 wn=0;we=0;wd=0;
-chi_0 = deg2rad(30);
+chi_0 = deg2rad(0);
 gamma_0 = 0;
 Va_0 = 5;
 phi_0 = 0;
-tspan = [0 15];
+tspan = [0 8];
 
 % List of waypoints
 waypoints = [
-0	0	20;
 5	0	20;
 10	5	20;
 10	15	20;
@@ -28,7 +27,7 @@ waypoints = [
 wp_ts = enumWP(waypoints,tspan);
 
 % 1. Make an initial guess of lambda_0
-lambda0 = 0.2*eye(7,1);
+lambda0 = [0.2*ones(3,1);zeros(4,1)];
 x0 = [0;0;20;chi_0;gamma_0;Va_0;phi_0];
 
 % 2. Integrate the system (x_dot and lambda_dot)

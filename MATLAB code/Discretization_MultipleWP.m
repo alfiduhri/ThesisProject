@@ -2,19 +2,19 @@ clear; clc; close all
 import casadi.*
 
 % Problem setup
-N = 50;                   % Number of control intervals
+N = 100;                   % Number of control intervals
 g = 9.81;                % Gravity acceleration
 b_gamma=1.5;
 b_va=0.6;
 b_phi=7;
 b=[b_gamma;b_va;b_phi];  % b=[b_gamma;b_va;b_phi]
 waypoints = [
-0	0	20;
-5	0	20;
-10	5	20;
-10	15	20;
-15	20	20;
-20	20	20;
+    0 0 20;
+    5 0 20;
+    10 5 16;
+    10 15 20;
+    15 20 20;
+    20 20 20;
 ];  % 3 waypoints [x, y, z]
 % waypoints = [
 % 0	0	20;
@@ -82,7 +82,7 @@ end
 J = J + lambda_time * T;
 
 % Initial and final state constraints
-x0=[waypoints(1,:)';0;0;5;0];
+x0=[waypoints(1,:)';deg2rad(0);0;5;0];
 xf = waypoints(end,:)';
 g = [X(:,1) - x0;g];
 g = [g; X(1:3,end) - xf];
@@ -134,3 +134,52 @@ scatter3(waypoints(end,1),waypoints(end,2),waypoints(end,3),'s','filled',...
 xlabel('x'); ylabel('y'); zlabel('h');
 title(sprintf('UAV Trajectory (Optimized T = %.2f s)', T_opt));
 legend('Trajectory', 'Waypoints','Start','Finish'); grid on;
+
+% Plot the control
+k = 0:N-1;              % Discrete time indices
+Ts = T_opt/N;              % Sampling time
+T_all = k * Ts;            % Map discrete time to continuous time
+
+figure
+subplot(2,1,1);
+stairs(T_all,U_opt(2,:),'LineWidth',1)
+ylabel('Control input V_a (m/s)')
+title('Time history of V_a command')
+grid on
+
+subplot(2,1,2); 
+stairs(T_all,rad2deg(U_opt(1,:)),'-.','LineWidth',1.5)
+hold on
+stairs(T_all,rad2deg(U_opt(3,:)),'--*','LineWidth',1.5)
+xlabel('Time (s)')
+title('Time history of \gamma_c and \phi_c')
+ylabel('Control Inputs (deg)')
+grid on
+legend('\gamma_c','\phi_c')
+
+%Plot the velocity, roll angle, course angle, flight path angle
+%State: [pn; pe; h; chi; gamma; Va; phi]
+kk=0:N;
+T_all2 = kk * Ts;  
+figure
+subplot(4,1,1)
+plot(T_all2,X_opt(6,:),'LineWidth',1.5)
+ylabel('Velocity (m/s)')
+title('Time history of the velocity, \gamma, \psi, and \phi')
+grid on
+
+subplot(4,1,2)
+plot(T_all2,rad2deg(X_opt(5,:)),'LineWidth',1.5)
+ylabel('\gamma (deg)')
+grid on
+
+subplot(4,1,3)
+plot(T_all2,rad2deg(X_opt(4,:)),'LineWidth',1.5)
+ylabel('\psi (deg)')
+grid on
+
+subplot(4,1,4)
+plot(T_all2,rad2deg(X_opt(7,:)),'LineWidth',1.5)
+xlabel('Time (s)')
+ylabel('\phi (deg)')
+grid on

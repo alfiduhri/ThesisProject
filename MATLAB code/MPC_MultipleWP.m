@@ -14,15 +14,16 @@ b=[b_gamma;b_va;b_phi];
 %
 %------- Parameters --------
 %
-N=7;
+N=5;
 h = 0.1;
-x0=[0;0;20;0;0;5;0];
+ywp0 = [0;0;20];
+x0=[ywp0;deg2rad(0);0;5;0]; % y = [pn pe h chi gamma Va phi]
 ywp = [
-5	0	20;
-10	5	15;
-10	15	18;
-15	20	20;
-20	20	20;
+    5 0 20;
+    10 5 16;
+    10 15 20;
+    15 20 20;
+    20 20 20;
 ];
 tol = 0.5;
 
@@ -36,10 +37,10 @@ fun =@(y) CostFunction(y,ywp(1,:)',N,h,m,n);
 %------- MPC algorithm ------
 
 %
-M=150; %time horizon
+M=200; %time horizon
 xt=ones(n*N+m*N,1);
 zt=x0;
-yvec=[];
+yvec=zt';
 uvec=[];
 options = optimoptions("fmincon","Display","none","Algorithm","sqp",...
    "EnableFeasibilityMode",true,"SubproblemAlgorithm","cg");
@@ -60,7 +61,7 @@ for flcnt1=1:M
     ut=y(1:3);
     f_NL = NonlinearDyn(zt,ut,g,b)';
     zt=zt+h*f_NL;
-    yvec=[yvec;zt(1:3)'];
+    yvec=[yvec;zt'];
     uvec=[uvec;reshape(ut,[1,3])];
     flcnt1
     if norm(zt(1:3) - ywp(end,:)') < tol
@@ -73,18 +74,77 @@ for flcnt1=1:M
     end
 
 end
+
+M_total = flcnt1;
 tvec=h*(1:1:M);
 % subplot(3,1,1)  %For the other two sets of parameters you should change
                 %the third index to 2 and 3, respectively.
 %plot(tvec,yvec,'-',tvec,uvec,'--')
 yvec = round(yvec,2);
-plot3(yvec(:,1),yvec(:,2),yvec(:,3))
+figure
+plot3(yvec(:,1),yvec(:,2),yvec(:,3),'LineWidth', 2)
 hold on
-scatter3(ywp(:,1),ywp(:,2),ywp(:,3))
-xlabel('x')
-ylabel('y')
-zlabel('z')
-grid
+loc = 1:length(ywp)-1;
+plot3(ywp(loc,1), ywp(loc,2), ywp(loc,3), 'rx',...
+    'MarkerSize', 10, 'LineWidth', 2);
+scatter3(ywp0(1),ywp0(2),ywp0(3),'d','filled',...
+    'MarkerFaceColor',"#EDB120",'MarkerEdgeColor',"#EDB120",...
+    "LineWidth",2);
+scatter3(ywp(end,1),ywp(end,2),ywp(end,3),'s','filled',...
+    'MarkerFaceColor',"#A2142F",'MarkerEdgeColor',"#A2142F",...
+    "LineWidth",2);
+xlabel('x'); ylabel('y'); zlabel('h');
+title(sprintf('UAV Trajectory from MPC method (Optimized T = %.2f s)', h*(M_total-1)));
+legend('Trajectory', 'Waypoints','Start','Finish'); grid on;
+grid on
+
+% Plot the control
+k = 0:M_total-1;              % Discrete time indices
+T_all = k * h;            % Map discrete time to continuous time
+
+figure
+subplot(2,1,1);
+stairs(T_all,uvec(:,2),'LineWidth',1)
+ylabel('Control input V_a (m/s)')
+title('Time history of V_a command')
+grid on
+
+subplot(2,1,2); 
+stairs(T_all,rad2deg(uvec(:,1)),'-.','LineWidth',1.5)
+hold on
+stairs(T_all,rad2deg(uvec(:,3)),'--*','LineWidth',1.5)
+xlabel('Time (s)')
+title('Time history of \gamma_c and \phi_c')
+ylabel('Control Inputs (rad)')
+grid on
+legend('\gamma_c','\phi_c')
+
+% Plot the velocity, gamma, phi, psi
+% y = [pn pe h chi gamma Va phi]
+kk=0:M_total;
+T_all2 = kk' * h;  
+figure
+subplot(4,1,1)
+plot(T_all2,yvec(:,6),'LineWidth',1.5)
+ylabel('Velocity (m/s)')
+title('Time history of the velocity, \gamma, \psi, and \phi')
+grid on
+
+subplot(4,1,2)
+plot(T_all2,rad2deg(yvec(:,5)),'LineWidth',1.5)
+ylabel('\gamma (deg)')
+grid on
+
+subplot(4,1,3)
+plot(T_all2,rad2deg(yvec(:,4)),'LineWidth',1.5)
+ylabel('\psi (deg)')
+grid on
+
+subplot(4,1,4)
+plot(T_all2,rad2deg(yvec(:,7)),'LineWidth',1.5)
+xlabel('Time (s)')
+ylabel('\phi (deg)')
+grid on
 
 %% Dynamics constraint
 

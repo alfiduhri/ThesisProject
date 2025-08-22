@@ -25,15 +25,20 @@ path = [
     20, 20, 20;
 ];
 
-maxSkipDist = 8; % Max allowed shortcut distance
+maxSkipDist = 10; % Max allowed shortcut distance
 simplified = removeLoopsDijkstra(path, maxSkipDist);
 
 % Plot original vs simplified
-figure; hold on; grid on; axis equal;
-plot(path(:,1), path(:,2), 'b--o', 'DisplayName', 'Original Path');
-plot(simplified(:,1), simplified(:,2), 'r-o', 'LineWidth', 2, 'DisplayName', 'Simplified Path');
+figure
+plot3(path(:,1), path(:,2), path(:,3),'b--o', 'DisplayName', 'Original Path');
+hold on
+grid on
+plot3(simplified(:,1), simplified(:,2),simplified(:,3),...
+    'r-o', 'LineWidth', 2, 'DisplayName', 'Simplified Path');
 legend;
-title('Loop Removal via Optimization (Dijkstra)');
+xlabel('x (m)');
+ylabel('y(m)');
+zlabel('h(m)');
 
 
 
